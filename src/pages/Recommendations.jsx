@@ -116,14 +116,21 @@ ${topProducts.slice(0, 5).map((p, i) => `${i + 1}. ${p.name}: ${p.views || 0} vi
           </h1>
           <p className="text-gray-500 mt-1">Smart insights for your inventory.</p>
         </div>
-        <button
-          onClick={generateAIInsight}
-          disabled={aiLoading}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50"
-        >
-          {aiLoading ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
-          Generate AI Insight
-        </button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="bg-yellow-100 text-yellow-800 p-2 text-xs font-mono rounded shadow">
+            API Key loaded: {import.meta.env.VITE_GEMINI_API_KEY ? 
+              import.meta.env.VITE_GEMINI_API_KEY.slice(0,12) + '...' : 
+              'NOT FOUND'}
+          </div>
+          <button
+            onClick={generateAIInsight}
+            disabled={aiLoading}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50"
+          >
+            {aiLoading ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
+            Generate AI Insight
+          </button>
+        </div>
       </div>
 
       {/* AI Insight Panel */}

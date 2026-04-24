@@ -1,60 +1,50 @@
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-
-const MODELS = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash-latest',
-]
+const KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 export async function callGemini(prompt) {
-  if (!GEMINI_API_KEY) {
-    console.error('VITE_GEMINI_API_KEY missing')
+  console.log('=== GEMINI DEBUG ===')
+  console.log('Key defined:', !!KEY)
+  console.log('Key preview:', KEY ? KEY.slice(0, 15) + '...' : 'MISSING')
+  console.log('Key length:', KEY?.length)
+
+  if (!KEY || KEY === 'undefined' || KEY.length < 20) {
+    console.error('KEY INVALID - Check Vercel environment variables')
     return null
   }
 
-  for (const model of MODELS) {
+  const models = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
+  ]
+
+  for (const model of models) {
     try {
       console.log('Trying model:', model)
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 800
-            }
+            generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
           })
         }
       )
-
-      if (res.status === 404) {
-        console.log(model, 'not available, trying next...')
-        continue
-      }
-
-      if (!res.ok) {
-        const err = await res.text()
-        console.error(model, 'error:', res.status, err)
-        continue
-      }
-
+      console.log(model, '→ status:', res.status)
+      if (res.status === 404 || res.status === 429) { continue }
+      if (!res.ok) { continue }
       const data = await res.json()
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text
       if (text) {
-        console.log('Success with model:', model)
-        return text
+        console.log('SUCCESS:', model)
+        return text.trim()
       }
-
     } catch (err) {
-      console.error(model, 'failed:', err.message)
-      continue
+      console.error(model, 'error:', err.message)
     }
   }
-
-  console.error('All Gemini models failed')
+  console.error('ALL MODELS FAILED')
   return null
 }
