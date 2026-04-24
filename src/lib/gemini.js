@@ -33,8 +33,14 @@ export async function callGemini(prompt) {
         }
       )
       console.log(model, '→ status:', res.status)
-      if (res.status === 404 || res.status === 429) { continue }
+      
+      if (res.status === 429) {
+        console.warn('Rate limit hit (429) for model', model)
+        return "⚠️ You've reached the free tier limit for the Gemini API (Too Many Requests). Please wait about 1-2 minutes and try again."
+      }
+      if (res.status === 404) { continue }
       if (!res.ok) { continue }
+      
       const data = await res.json()
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text
       if (text) {
