@@ -99,7 +99,7 @@ ${topProducts.slice(0, 5).map((p, i) => `${i + 1}. ${p.name}: ${p.views || 0} vi
     if (result) {
       setAiInsight(result);
     } else {
-      setAiInsight("AI insight unavailable. Check your VITE_GEMINI_API_KEY in .env");
+      setAiInsight("AI insight unavailable. Check your VITE_GROQ_API_KEY in .env");
     }
     setAiLoading(false);
   };

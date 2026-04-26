@@ -176,7 +176,7 @@ Important rules:
 - Maximum 25 words per point`;
 
       const result = await callGemini(prompt);
-      setAiStrategy(result || "AI unavailable. Check VITE_GEMINI_API_KEY");
+      setAiStrategy(result || "AI unavailable. Check VITE_GROQ_API_KEY");
     } finally {
       setAiLoading(false);
     }

@@ -1,56 +1,57 @@
-const KEY = import.meta.env.VITE_GEMINI_API_KEY
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
 
 export async function callGemini(prompt) {
-  console.log('=== GEMINI DEBUG ===')
-  console.log('Key defined:', !!KEY)
-  console.log('Key preview:', KEY ? KEY.slice(0, 15) + '...' : 'MISSING')
-  console.log('Key length:', KEY?.length)
+  console.log('Groq called. Key exists:', !!GROQ_API_KEY)
 
-  if (!KEY || KEY === 'undefined' || KEY.length < 20) {
-    console.error('KEY INVALID - Check Vercel environment variables')
+  if (!GROQ_API_KEY || GROQ_API_KEY.length < 10) {
+    console.error('VITE_GROQ_API_KEY missing. Add it to .env and Vercel environment variables.')
     return null
   }
 
-  const models = [
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro'
-  ]
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama3-8b-8192',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a business advisor for an e-commerce store owner. Always give exactly 3 practical recommendations numbered 1, 2, 3. Each on its own line. No asterisks. No markdown. Plain text only. Maximum 25 words per point.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      })
+    })
 
-  for (const model of models) {
-    try {
-      console.log('Trying model:', model)
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
-          })
-        }
-      )
-      console.log(model, '→ status:', res.status)
-      
-      if (res.status === 429) {
-        console.warn('Rate limit hit (429) for model', model)
-        return "⚠️ You've reached the free tier limit for the Gemini API (Too Many Requests). Please wait about 1-2 minutes and try again."
-      }
-      if (res.status === 404) { continue }
-      if (!res.ok) { continue }
-      
-      const data = await res.json()
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-      if (text) {
-        console.log('SUCCESS:', model)
-        return text.trim()
-      }
-    } catch (err) {
-      console.error(model, 'error:', err.message)
+    console.log('Groq status:', response.status)
+
+    if (!response.ok) {
+      const err = await response.text()
+      console.error('Groq error:', response.status, err)
+      return null
     }
+
+    const data = await response.json()
+    const text = data.choices?.[0]?.message?.content
+
+    if (text && text.trim().length > 0) {
+      console.log('Groq success. Preview:', text.slice(0, 80))
+      return text.trim()
+    }
+
+    return null
+
+  } catch (err) {
+    console.error('Groq fetch failed:', err.message)
+    return null
   }
-  console.error('ALL MODELS FAILED')
-  return null
 }
